@@ -591,6 +591,7 @@ export function buildProps({ terrain, roads, colliders, city, pierZ }) {
         inst.setMatrixAt(i, m4);
         inst.setColorAt(i, col.setScalar(0.82 + rng() * 0.36));
       });
+      inst.userData.full = list.length;
       inst.castShadow = true;
       inst.receiveShadow = false;
       inst.frustumCulled = false;

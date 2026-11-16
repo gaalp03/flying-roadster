@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { curve, clamp, lerp, smoothstep } from '../util.js';
+import { Batch } from '../world/batch.js';
 
 // Overall dimensions (metres). Origin: on the ground, centred between the axles' midpoint; +z is forward.
 export const DIM = {
@@ -220,28 +221,22 @@ function buildWheel(r, width, mats) {
   const g = new THREE.Group();
   const prof = [[r - 0.1, -width / 2], [r - 0.03, -width / 2], [r, -width / 2 + 0.035], [r, width / 2 - 0.035], [r - 0.03, width / 2], [r - 0.1, width / 2]];
   const tire = new THREE.Mesh(new THREE.LatheGeometry(prof.map((p) => new THREE.Vector2(p[0], p[1])), 22).rotateZ(-Math.PI / 2), mats.tire);
-  const rr = r - 0.095;
-  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(rr, rr, width * 0.9, 22, 1, true).rotateZ(Math.PI / 2), mats.rimDark);
-  const back = new THREE.Mesh(new THREE.CircleGeometry(rr, 22).rotateY(Math.PI / 2).translate(width * 0.18, 0, 0), mats.rimDark);
+  const rr = r - 0.095, face = width / 2 - 0.035;
+  // parts sharing a material are merged so a wheel costs four draw calls
+  const dark = new Batch(), bright = new Batch(), m4 = new THREE.Matrix4(), rot = new THREE.Matrix4();
+  dark.addGeometry(new THREE.CircleGeometry(rr, 22).rotateY(Math.PI / 2), m4.makeTranslation(width * 0.18, 0, 0), 0xffffff);
+  dark.addGeometry(new THREE.CylinderGeometry(0.062, 0.07, 0.05, 12).rotateZ(-Math.PI / 2), m4.makeTranslation(face, 0, 0), 0xffffff);
   const disc = new THREE.Mesh(new THREE.CylinderGeometry(rr * 0.78, rr * 0.78, 0.02, 20).rotateZ(Math.PI / 2).translate(width * 0.2, 0, 0), mats.brake);
-  g.add(tire, barrel, back, disc);
-  // turbine-style directional spokes
-  const spokes = new THREE.Group();
   // thin-spoke lightweight wheel: spokes in pairs
   const n = 9, blade = new THREE.BoxGeometry(0.022, rr - 0.05, 0.016).translate(0, (rr - 0.05) / 2 + 0.05, 0);
   for (let k = 0; k < n; k++) {
-    for (const off of [-0.085, 0.085]) {
-      const m = new THREE.Mesh(blade, mats.rim);
-      m.rotation.set((k / n) * Math.PI * 2 + off, 0, 0, 'XYZ');
-      spokes.add(m);
-    }
+    for (const off of [-0.085, 0.085]) bright.addGeometry(blade, m4.makeTranslation(face, 0, 0).multiply(rot.makeRotationX((k / n) * Math.PI * 2 + off)), 0xffffff);
   }
-  const lip = new THREE.Mesh(new THREE.TorusGeometry(rr - 0.012, 0.014, 5, 26).rotateY(Math.PI / 2), mats.rim);
-  const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.07, 0.05, 12).rotateZ(-Math.PI / 2), mats.rimDark);
-  spokes.add(lip, hub);
-  spokes.position.x = width / 2 - 0.035;
-  g.add(spokes);
-  g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+  bright.addGeometry(new THREE.TorusGeometry(rr - 0.012, 0.014, 5, 26).rotateY(Math.PI / 2), m4.makeTranslation(face, 0, 0), 0xffffff);
+  const darkMesh = dark.build(mats.rimDark, false), brightMesh = bright.build(mats.rim, false);
+  darkMesh.matrixAutoUpdate = brightMesh.matrixAutoUpdate = true;
+  g.add(tire, darkMesh, disc, brightMesh);
+  tire.castShadow = true;
   return g;
 }
 

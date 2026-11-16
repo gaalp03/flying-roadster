@@ -5,9 +5,9 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const TIERS = {
-  low: { ratio: 1, bloom: false, shadows: 0, msaa: 0, treeShadows: false },
-  medium: { ratio: 1.5, bloom: true, shadows: 1024, msaa: 0, treeShadows: false },
-  high: { ratio: 2, bloom: true, shadows: 2048, msaa: 4, treeShadows: true },
+  low: { ratio: 1, bloom: false, shadows: 0, msaa: 0, treeShadows: false, trees: 0.4 },
+  medium: { ratio: 1.5, bloom: true, shadows: 1024, msaa: 0, treeShadows: false, trees: 0.7 },
+  high: { ratio: 2, bloom: true, shadows: 2048, msaa: 4, treeShadows: true, trees: 1 },
 };
 
 // Owns the WebGL renderer, post-processing chain and the quality / dynamic resolution logic.
@@ -54,7 +54,10 @@ export class Gfx {
       sun.shadow.mapSize.set(t.shadows, t.shadows);
       if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }
     }
-    for (const m of this.world.props.group.userData.trees || []) m.castShadow = t.treeShadows;
+    for (const m of this.world.props.group.userData.trees || []) {
+      m.castShadow = t.treeShadows;
+      m.count = Math.round(m.userData.full * t.trees); // thin the forests out on weaker devices
+    }
     this.scene.traverse((o) => { if (o.material) { const ms = Array.isArray(o.material) ? o.material : [o.material]; for (const m of ms) m.needsUpdate = true; } });
     if (this.composer) { this.composer.dispose(); this.composer = null; }
     if (t.bloom) {
