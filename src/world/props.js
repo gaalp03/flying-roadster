@@ -255,6 +255,31 @@ export function buildProps({ terrain, roads, colliders, city, pierZ }) {
       for (let j = 0; j < n; j++) solid.box(x, y + 1.45 + j * 2.9, z, 12.2, 2.9, 2.6, cc[(k + j) % 5]);
       colliders.add({ x, z, hx: 6.1, hz: 1.3, y0: y - 1, y1: y + n * 2.9, kind: 'prop' });
     }
+    // spectator stands either side of the launch lane
+    const crowd = [0xe5484d, 0xf2a33a, 0x3aa6c9, 0xf2ede2, 0x7c5cc4, 0x2f9a7a];
+    for (const s of [-1, 1]) {
+      const zc = RUNWAY.z + s * 52;
+      for (let row = 0; row < 5; row++) {
+        solid.box(-700, y + 0.6 + row * 1.1, zc + s * row * 1.6, 70, 1.2, 1.7, row % 2 ? 0x8d949c : 0xa7adb3);
+        for (let k = 0; k < 34; k++) if ((k * 7 + row * 3) % 5 !== 0) solid.box(-733 + k * 2 + ((row * 37 + k * 11) % 7) * 0.1, y + 1.75 + row * 1.1, zc + s * row * 1.6, 0.55, 1.1, 0.5, crowd[(k * 5 + row * 3) % 6]);
+      }
+      solid.box(-700, y + 9, zc + s * 9.5, 72, 0.5, 5, 0x25272d, 0, 0, 0);
+      for (const dx of [-34, 0, 34]) solid.box(-700 + dx, y + 4.5, zc + s * 11.5, 0.6, 9, 0.6, 0x25272d);
+      colliders.add({ x: -700, z: zc + s * 4, hx: 35, hz: 5.6, y0: y - 1, y1: y + 6.4, kind: 'building' });
+      // LED strips guiding into the ramp
+      for (let x = -760; x < -600; x += 8) glow.box(x, y + 0.08, RUNWAY.z + s * 10.5, 4, 0.12, 0.25, 0xff5a40);
+    }
+    // propellant tanks and a test stand behind the hangars
+    for (let k = 0; k < 4; k++) {
+      const tx = -1560 + k * 16, tz = 262;
+      solid.cyl(tx, y + 9, tz, 5, 5, 18, 0xf2f1ec, 14);
+      solid.addGeometry(new THREE.SphereGeometry(5, 14, 6, 0, Math.PI * 2, 0, Math.PI / 2), solid.matrix(tx, y + 18, tz), 0xf2f1ec);
+      colliders.add({ x: tx, z: tz, hx: 4.6, hz: 4.6, y0: y - 1, y1: y + 22, kind: 'building' });
+    }
+    for (let k = 0; k < 4; k++) solid.box(-1575 + (k % 2) * 6, y + 20, 298 + Math.floor(k / 2) * 6, 0.5, 40, 0.5, 0xc9483a);
+    for (let k = 0; k < 5; k++) solid.box(-1572, y + 6 + k * 8, 301, 7, 0.4, 7, 0xc9483a);
+    colliders.add({ x: -1572, z: 301, hx: 3.6, hz: 3.6, y0: y - 1, y1: y + 40, kind: 'building' });
+    beacons.push([-1572, y + 41, 301]);
     // launch gantry and flood-light masts
     const gx = -690;
     for (const s of [-1, 1]) {

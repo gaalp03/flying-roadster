@@ -151,8 +151,9 @@ export class Input {
     if (T.boost) { boost = true; if (!T.boostWas) boostPressed = true; }
     T.boostWas = T.boost;
     if (T.shift) shift = true;
-    if (T.flyEdge) { fly = true; T.flyEdge = false; }
-    if (T.rollEdge) { roll = steer < -0.1 ? -1 : 1; T.rollEdge = false; }
+    // the FLY button doubles as ROLL while flying, so a stray tap can never drop the car out of the sky
+    if (T.flyEdge) { if (inFlight) this.rollHold = { dir: steer < -0.1 ? -1 : 1, t: 6 }; else fly = true; T.flyEdge = false; }
+    if (this.rollHold) { roll = this.rollHold.dir; if (--this.rollHold.t <= 0) this.rollHold = null; }
 
     const pads = navigator.getGamepads ? navigator.getGamepads() : [];
     for (const pad of pads) {

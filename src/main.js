@@ -386,7 +386,7 @@ class Game {
     requestAnimationFrame((t) => this.frame(t));
     const real = Math.min((now - this.last) / 1000, 0.1);
     this.last = now;
-    const ev = this.input.poll();
+    const ev = this.input.poll(this.car.mode === 'fly');
     const drag = this.input.takeDrag();
     const car = this.car, st = this.input.state;
     let simDt = 0;
