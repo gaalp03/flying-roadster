@@ -1,0 +1,20 @@
+{
+  "name": "flying-roadster",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Flying Roadster - a free-play 3D flying car sandbox for the browser.",
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "dev": "node tools/build.mjs --watch",
+    "serve": "node tools/serve.mjs",
+    "music": "node tools/make-music.mjs",
+    "zip": "node tools/build.mjs && node tools/zip.mjs"
+  },
+  "devDependencies": {
+    "@fontsource/barlow": "^5.0.0",
+    "@fontsource/barlow-condensed": "^5.0.0",
+    "esbuild": "^0.28.2",
+    "three": "0.170.0"
+  }
+}
