@@ -168,6 +168,7 @@ export class Vehicle {
     if (drift) acc -= Math.sign(vF) * 5;
     if (!this.boosting && input.throttle === 0 && Math.abs(vF) < 0.4) vF = 0;
     acc -= G_GROUND * 0.75 * slope / Math.sqrt(1 + slope * slope);
+    this.accel = grounded && (this.boosting || input.throttle > 0) ? Math.max(0, acc) : 0;
     if (grounded) {
       vF += acc * dt * (this.surf === 'road' ? 1 : this.boosting ? 0.9 : 0.86);
       vL *= Math.exp(-(drift ? 2.3 : 11.5) * surfGrip * dt);

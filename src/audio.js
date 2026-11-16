@@ -2,9 +2,10 @@ import { clamp, lerp } from './util.js';
 import { AUDIO } from './audio-manifest.js';
 
 // Sample-based audio: every sound is a CC0 recording (see CREDITS.md) loaded from assets/audio.
-// Continuous layers (motor, wind, thrusters, tyres) are loops whose gain and pitch follow the car.
+// Continuous layers are loops whose gain and pitch follow the car. The roadster is electric, so there is no engine
+// note: on the road you hear tyres and wind plus a faint inverter whine under load; only the thrusters are loud.
 const BASE = 'assets/audio/';
-const LOOPS = ['motor', 'hum', 'jet', 'lift', 'wind', 'skid'];
+const LOOPS = ['motor', 'jet', 'lift', 'wind', 'skid'];
 
 export class GameAudio {
   constructor() {
@@ -87,6 +88,8 @@ export class GameAudio {
       src.start(0, AUDIO[name].loop[0] + Math.random() * AUDIO[name].loop[1] * 0.5);
       L[name] = { src, filter, gain };
     }
+    // the motor layer is band-passed and pitched up into a thin electric whine
+    if (L.motor) { L.motor.filter.type = 'bandpass'; L.motor.filter.Q.value = 1.6; L.motor.filter.frequency.value = 2400; }
     // road rumble: the wind recording again, pitched down and low-passed
     if (this.buffers.wind) {
       const src = ctx.createBufferSource();
@@ -142,22 +145,20 @@ export class GameAudio {
     const t = this.ctx.currentTime, set = (p, v, tc = 0.07) => p.setTargetAtTime(v, t, tc);
     set(this.world.gain, active ? 1 : 0, 0.12);
     const sp = car.speed, k = clamp(sp / 95, 0, 1), fly = car.mode === 'fly', ground = car.mode === 'drive' && car.offGround < 0.08;
-    const load = car.boosting ? 1 : ground ? 0.6 : 0.35, slow = lerp(0.6, 1, slowmo);
+    const slow = lerp(0.6, 1, slowmo);
     if (L.motor) {
-      set(L.motor.src.playbackRate, (0.5 + k * 1.5) * (car.boosting ? 1.1 : 1) * slow);
-      set(L.motor.gain.gain, (0.05 + k * 0.2) * load * (fly ? 0.4 : 1));
-      set(L.motor.filter.frequency, 900 + k * 5000 + load * 1500);
-    }
-    if (L.hum) {
-      set(L.hum.src.playbackRate, (0.7 + k * 0.7) * slow);
-      set(L.hum.gain.gain, 0.05 + k * 0.1 * load);
+      // silent at a standstill, a faint rising whine only while the motors are working
+      const work = ground ? clamp(Math.abs(car.accel || 0) / 16, 0, 1) * 0.7 + (car.boosting ? 0.3 : 0) : 0;
+      set(L.motor.src.playbackRate, (1.1 + k * 1.7) * slow);
+      set(L.motor.gain.gain, k > 0.01 ? (0.012 + k * 0.03) * work : 0, 0.12);
+      set(L.motor.filter.frequency, 1900 + k * 3600);
     }
     if (L.road) {
-      set(L.road.gain.gain, ground ? k * (car.surf === 'road' ? 0.5 : 0.85) : 0);
+      set(L.road.gain.gain, ground ? k * (car.surf === 'road' ? 0.62 : 0.95) : 0);
       set(L.road.filter.frequency, car.surf === 'road' ? 320 + k * 380 : 220 + k * 200);
     }
     if (L.wind) {
-      set(L.wind.gain.gain, k * k * (fly || !ground ? 0.75 : 0.4));
+      set(L.wind.gain.gain, k * k * (fly || !ground ? 0.75 : 0.5));
       set(L.wind.src.playbackRate, 0.75 + k * 0.6);
     }
     if (L.jet) {

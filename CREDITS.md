@@ -15,7 +15,7 @@ No sound in the game is synthesised: every sound effect and the music track is a
 
 | File(s) | Original file(s) | Pack / page | Author | Licence |
 | --- | --- | --- | --- | --- |
-| `motor`, `hum`, `jet` (loops), `ignite`, `fold`, `unfold` | `engineCircular_000`, `spaceEngineLow_000`, `thrusterFire_000`, `lowFrequency_explosion_000`, `doorClose_000`, `doorOpen_000` | Sci-Fi Sounds 1.0 — https://kenney.nl/assets/sci-fi-sounds | Kenney (kenney.nl) | CC0 |
+| `motor` (faint electric whine), `jet` (loops), `ignite`, `fold`, `unfold` | `engineCircular_000`, `thrusterFire_000`, `lowFrequency_explosion_000`, `doorClose_000`, `doorOpen_000` | Sci-Fi Sounds 1.0 — https://kenney.nl/assets/sci-fi-sounds | Kenney (kenney.nl) | CC0 |
 | `thud`, `land`, `crash`, `crash2`, `scrape` | `impactSoft_medium_001`, `impactSoft_heavy_002`, `impactMetal_heavy_001`, `impactPlate_heavy_000`, `impactMetal_light_002` | Impact Sounds — https://kenney.nl/assets/impact-sounds | Kenney (kenney.nl) | CC0 |
 | `click`, `tick`, `ring`, `bank` | `click_002`, `select_003`, `confirmation_002`, `confirmation_004` | Interface Sounds — https://kenney.nl/assets/interface-sounds | Kenney (kenney.nl) | CC0 |
 | `bankBig`, `unlock` | `jingles_STEEL10`, `jingles_STEEL03` | Music Jingles — https://kenney.nl/assets/music-jingles | Kenney (kenney.nl) | CC0 |

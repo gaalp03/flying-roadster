@@ -12,12 +12,6 @@ export const AUDIO = {
       4
     ]
   },
-  "hum": {
-    "loop": [
-      0.25,
-      4
-    ]
-  },
   "jet": {
     "loop": [
       0.25,

@@ -57,7 +57,6 @@ let total = 0;
 // --- continuous layers: cut a stretch, crossfade its tail into its head so it loops without a click
 const LOOPS = {
   motor: ['sci-fi-sounds/Audio/engineCircular_000.ogg', 0.3, 4.0, 0.5],
-  hum: ['sci-fi-sounds/Audio/spaceEngineLow_000.ogg', 0.3, 4.0, 0.5],
   jet: ['sci-fi-sounds/Audio/thrusterFire_000.ogg', 0.3, 4.0, 0.5],
   lift: ['oga/thruster.ogg', 0.4, 4.6, 0.6],
   wind: ['oga/wind.ogg', 0.2, 5.0, 0.6],

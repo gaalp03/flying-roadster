@@ -5,6 +5,8 @@ ramp, watch the wheels fold and the thrusters light, then fly anywhere over a su
 
 **Play:** https://gaalp03.github.io/flying-roadster/
 
+The car is electric, so it sounds like one: tyres, wind and a faint motor whine on the road, and loud cold-gas thrusters in the air.
+
 Built with three.js for [CrazyGames](https://www.crazygames.com) (SDK v3). No levels, no traffic, no logins, no ads — just the car,
 the island and a pile of stunt points.
 
