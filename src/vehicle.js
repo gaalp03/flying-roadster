@@ -89,6 +89,7 @@ export class Vehicle {
   step(dt, input) {
     this.time += dt;
     this.prev.copy(this.pos);
+    if (this.mode === 'sunk') { this.vel.multiplyScalar(1 - 3 * dt); this.pos.addScaledVector(this.vel, dt); this.thrust = this.lift = 0; this.speed = 0; return; }
     if (input.fly) { if (this.mode === 'fly') this.dropFlight(); else this.engageFlight(false); }
     if (this.mode === 'drive') this.stepDrive(dt, input);
     else if (this.mode === 'air') this.stepAir(dt, input);
@@ -194,12 +195,19 @@ export class Vehicle {
       this.offGround = 0;
     }
 
-    if (this.overWater && p.y < -0.55) return this.emit('splash', {});
+    if (this.overWater && p.y < -0.55) return this.sink();
     // remember a safe place to respawn
     if (grounded && !this.overWater && gy > 1.5 && this.time - this.safeT > 1.2 && Math.abs(vF) > 2 && this.time - this.hitT > 1.5) {
       this.safeT = this.time;
       this.safe.x = p.x - sy * 4; this.safe.z = p.z - cy * 4; this.safe.yaw = this.yaw;
     }
+  }
+
+  sink() {
+    this.mode = 'sunk';
+    this.vel.y = Math.max(this.vel.y, -3);
+    this.boosting = this.braking = false;
+    this.emit('splash', {});
   }
 
   takeOff() {
@@ -255,7 +263,7 @@ export class Vehicle {
     this.groundY = _g.h;
     this.overWater = _g.water;
     this.alt = p.y - Math.max(_g.h, 0);
-    if (_g.water && p.y < -0.5) return this.emit('splash', {});
+    if (_g.water && p.y < -0.5) return this.sink();
     if (p.y <= _g.h) {
       const impact = -this.vel.y;
       const up = _v.set(0, 1, 0).applyQuaternion(this.quat).y;
@@ -272,6 +280,7 @@ export class Vehicle {
         this.vel.y = clamp(impact * 0.35, 3.5, 7);
         this.vel.x *= 0.6; this.vel.z *= 0.6;
         this.recover = 0.5;
+        this.airTime = 0;
         this.angVel.set(0, 0, 0);
         this.hitT = this.time;
         this.emit('crash', { impact: Math.max(impact, 8), flipped: true });
@@ -301,9 +310,10 @@ export class Vehicle {
     let vyT = input.boost ? 27 : input.shift ? -30 : 0;
     if (p.y > CEILING - 80) vyT = Math.min(vyT, (CEILING - p.y) * 0.35);
     // landing flare: slow the descent close to the surface so touchdowns are gentle
-    if (this.alt < 13) vyT = Math.max(vyT, -(3 + this.alt * 2.1));
+    const flare = -(2.5 + this.alt * 1.7);
+    if (this.alt < 14) vyT = Math.max(vyT, flare);
     this.launchAssist -= dt;
-    this.vel.y = damp(this.vel.y, vyT, this.launchAssist > 0 && !input.shift ? 0.35 : 3.3, dt);
+    this.vel.y = damp(this.vel.y, vyT, this.launchAssist > 0 && !input.shift ? 0.35 : this.alt < 14 && this.vel.y < flare ? 11 : 3.3, dt);
     p.addScaledVector(this.vel, dt);
 
     this.thrust = damp(this.thrust, 0.35 + 0.65 * Math.max(0, input.throttle) * (1 - spk * 0.4) + (input.boost ? 0.3 : 0), 6, dt);
@@ -386,7 +396,7 @@ export class Vehicle {
           }
           const gap = inside ? -1 : Math.hypot(Math.max(ex, 0), Math.max(ez, 0)) - BODY_R;
           if (gap >= 0) {
-            if (gap < 3.4 && sp > 26 && !b.quiet) {
+            if (gap < 4.2 && sp > 26 && !b.quiet) {
               let n = this.near.find((e) => e.box === b);
               if (!n) this.near.push((n = { box: b, gap, stamp }));
               n.gap = Math.min(n.gap, gap);
@@ -412,16 +422,21 @@ export class Vehicle {
           p.x += wx * depth; p.z += wz * depth;
           const vn = this.vel.x * wx + this.vel.z * wz;
           if (vn < 0) {
-            this.vel.x -= wx * vn * 1.22; this.vel.z -= wz * vn * 1.22;
+            const rest = this.mode === 'fly' ? 1.4 : 1.22;
+            this.vel.x -= wx * vn * rest; this.vel.z -= wz * vn * rest;
             const fr = 1 - Math.min(0.3, -vn * 0.012);
             this.vel.x *= fr; this.vel.z *= fr;
             if (-vn > 3.5 && this.time - this.hitT > 0.25) {
               this.hitT = this.time;
               this.emit(-vn > 9 ? 'crash' : 'scrape', { impact: -vn, x: p.x + ox - wx, y: p.y + 0.5, z: p.z + oz - wz });
             }
-            // turn the nose along the wall so the car slides instead of sticking
-            const hv = Math.hypot(this.vel.x, this.vel.z);
-            if (hv > 3 && this.mode !== 'air') this.yaw = dampAngle(this.yaw, Math.atan2(this.vel.x, this.vel.z), 7, dt);
+          }
+          // turn the nose along the wall so the car slides (or flies) past instead of sticking to it
+          const fn = sy * wx + cy * wz;
+          if (fn < -0.05 && this.mode !== 'air') {
+            let tx = sy - wx * fn, tz = cy - wz * fn;
+            if (Math.hypot(tx, tz) < 0.25) { tx = -wz; tz = wx; }
+            this.yaw = dampAngle(this.yaw, Math.atan2(tx, tz), this.mode === 'fly' ? 8 : 5, dt);
           }
           const idx = this.near.findIndex((e) => e.box === b);
           if (idx >= 0) this.near.splice(idx, 1);

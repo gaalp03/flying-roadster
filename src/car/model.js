@@ -150,37 +150,33 @@ function buildShell() {
     return id;
   };
   const raw = (B, x, y, z) => { B.pos.push(x, y, z); return B.pos.length / 3 - 1; };
-  const a3 = new THREE.Vector3(), b3 = new THREE.Vector3(), c3 = new THREE.Vector3(), n3 = new THREE.Vector3();
-  const face = (B, i0, i1, i2) => {
-    a3.fromArray(B.pos, i0 * 3); b3.fromArray(B.pos, i1 * 3); c3.fromArray(B.pos, i2 * 3);
-    n3.subVectors(b3, a3).cross(c3.sub(a3));
-    if (n3.lengthSq() < 1e-12) return;
-    b3.fromArray(B.pos, i1 * 3); c3.fromArray(B.pos, i2 * 3);
-    const cx = (a3.x + b3.x + c3.x) / 3, cy = (a3.y + b3.y + c3.y) / 3, cz = (a3.z + b3.z + c3.z) / 3;
-    const ref = cx * n3.x + (cy - 0.56) * n3.y + (cz - clamp(cz, -1.6, 1.6)) * 4 * n3.z;
-    if (ref >= 0) B.idx.push(i0, i1, i2); else B.idx.push(i0, i2, i1);
+  // Winding is decided once per side from a reference panel, so every face of the grid is oriented consistently.
+  const tri = (B, flip, i0, i1, i2) => { if (i0 === i1 || i1 === i2 || i0 === i2) return; if (flip) B.idx.push(i0, i2, i1); else B.idx.push(i0, i1, i2); };
+  const iRef = Math.floor(Z.length / 2), jRef = 3;
+  const normalOf = (A, Bp, C, side) => {
+    const ux = (Bp[0] - A[0]) * side, uy = Bp[1] - A[1], uz = Bp[2] - A[2], vx = (C[0] - A[0]) * side, vy = C[1] - A[1], vz = C[2] - A[2];
+    return [uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx];
   };
-  for (let i = 0; i < Z.length - 1; i++) {
-    const zm = (Z[i] + Z[i + 1]) / 2;
-    for (let j = 0; j < nu - 1; j++) {
-      const um = (RING_U[j] + RING_U[j + 1]) / 2;
-      const B = um < 2 ? buckets.trim : um < 5 ? buckets.paint : zm > GLASS_Z0 && zm < GLASS_Z1 ? buckets.glass : buckets.paint;
-      for (const side of [1, -1]) {
+  for (const side of [1, -1]) {
+    const flip = normalOf(pts[iRef][jRef], pts[iRef + 1][jRef], pts[iRef + 1][jRef + 1], side)[0] * side < 0;
+    for (let i = 0; i < Z.length - 1; i++) {
+      const zm = (Z[i] + Z[i + 1]) / 2;
+      for (let j = 0; j < nu - 1; j++) {
+        const um = (RING_U[j] + RING_U[j + 1]) / 2;
+        const B = um < 2 ? buckets.trim : um < 5 ? buckets.paint : zm > GLASS_Z0 && zm < GLASS_Z1 ? buckets.glass : buckets.paint;
         const a = vert(B, i, j, side), b = vert(B, i + 1, j, side), c = vert(B, i + 1, j + 1, side), d = vert(B, i, j + 1, side);
-        face(B, a, b, c); face(B, a, c, d);
+        tri(B, flip, a, b, c); tri(B, flip, a, c, d);
       }
     }
-  }
-  // end caps: lower fascia is black, upper part is paint
-  for (const [i, dz, split] of [[0, -0.03, 3], [Z.length - 1, 0.035, 2]]) {
-    const row = pts[i], yMid = (row[0][1] + row[nu - 1][1]) / 2 + (i === 0 ? 0.02 : -0.03);
-    for (let j = 0; j < nu - 1; j++) {
-      const B = (RING_U[j] + RING_U[j + 1]) / 2 < split ? buckets.trim : buckets.paint;
-      for (const side of [1, -1]) {
-        const a = vert(B, i, j, side), b = vert(B, i, j + 1, side);
-        let c = B.capCentre;
-        if (c === undefined || B.capRow !== i) { c = raw(B, 0, yMid, row[0][2] + dz); B.capCentre = c; B.capRow = i; }
-        face(B, a, b, c);
+    // end caps: lower fascia is black, upper part is paint
+    for (const [i, dz, split] of [[0, -0.03, 3], [Z.length - 1, 0.035, 2]]) {
+      const row = pts[i], yMid = (row[0][1] + row[nu - 1][1]) / 2 + (i === 0 ? 0.02 : -0.03), centre = [0, yMid, row[0][2] + dz];
+      const capFlip = normalOf(row[jRef], row[jRef + 1], centre, side)[2] * dz < 0;
+      for (let j = 0; j < nu - 1; j++) {
+        const B = (RING_U[j] + RING_U[j + 1]) / 2 < split ? buckets.trim : buckets.paint;
+        const key = `cap${i}`;
+        if (B[key] === undefined) B[key] = raw(B, centre[0], centre[1], centre[2]);
+        tri(B, capFlip, vert(B, i, j, side), vert(B, i, j + 1, side), B[key]);
       }
     }
   }
@@ -257,7 +253,7 @@ export class CarModel {
 
     const m = (this.mats = {
       paint: new THREE.MeshPhysicalMaterial({ color: 0xcfd1ce, metalness: 0.12, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.13, envMapIntensity: 1.1 }),
-      glass: new THREE.MeshStandardMaterial({ color: 0x6b4a1c, metalness: 1, roughness: 0.15, envMapIntensity: 1.35 }),
+      glass: new THREE.MeshStandardMaterial({ color: 0x6b4a1c, metalness: 1, roughness: 0.24, envMapIntensity: 1.35 }),
       titan: new THREE.MeshStandardMaterial({ color: 0x8d9197, metalness: 0.92, roughness: 0.34 }),
       trim: new THREE.MeshStandardMaterial({ color: 0x0c0d0f, metalness: 0.3, roughness: 0.55 }),
       tire: new THREE.MeshStandardMaterial({ color: 0x131417, roughness: 0.9, metalness: 0 }),
@@ -269,7 +265,7 @@ export class CarModel {
       nozzle: new THREE.MeshBasicMaterial({ color: 0x000000 }),
     });
     m.head.color.setRGB(3.4, 3.5, 3.8);
-    m.tail.color.setRGB(4, 0.2, 0.12);
+    m.tail.color.setRGB(3.4, 0.07, 0.05);
 
     const shell = buildShell();
     for (const k of ['paint', 'glass', 'trim']) {
@@ -312,15 +308,12 @@ export class CarModel {
     add(decal(0.6, 0.612, 2, 4.95, 1, 0.004, 10), m.trim);
     add(decal(-0.66, -0.648, 2, 4.95, 1, 0.004, 10), m.trim);
     // diffuser fins, splitter, mirrors
-    for (const x of [-0.42, -0.14, 0.14, 0.42]) add(new THREE.BoxGeometry(0.022, 0.16, 0.34).translate(x, 0.42, Z_TAIL + 0.15), m.titan);
+    for (const x of [-0.42, -0.14, 0.14, 0.42]) add(new THREE.BoxGeometry(0.02, 0.13, 0.3).translate(x, 0.43, Z_TAIL + 0.14), m.trim);
     for (const s of [1, -1]) {
       add(new THREE.BoxGeometry(0.14, 0.02, 0.04).translate(s * 0.92, 0.868, 0.6), m.trim);
       const cap = add(new THREE.BoxGeometry(0.03, 0.055, 0.13).translate(s * 1.0, 0.878, 0.59), m.titan, true);
       cap.geometry.computeVertexNormals();
     }
-    // wheel wells
-    for (const w of ARCH) for (const s of [1, -1]) add(new THREE.BoxGeometry(0.42, 0.42, w.a * 2 - 0.06).translate(s * 0.4, 0.35, w.z), m.trim);
-    add(new THREE.BoxGeometry(1.2, 0.06, 3.9).translate(0, 0.19, 0), m.trim);
 
     // rear thruster nozzles
     this.nozzles = [];
@@ -382,7 +375,7 @@ export class CarModel {
 
   setLights(brake, night) {
     const t = this.mats.tail.color, k = 1 + brake * 1.6 + night * 0.3;
-    t.setRGB(4 * k, 0.2 * k, 0.12 * k);
+    t.setRGB(3.4 * k, 0.07 * k, 0.05 * k);
     const h = 3.2 + night * 3;
     this.mats.head.color.setRGB(h, h * 1.03, h * 1.12);
   }

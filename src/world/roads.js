@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { lerp, smoothstep } from '../util.js';
-import { MOUNTAIN, CAPE } from './layout.js';
+import { MOUNTAIN, CAPE, BAY } from './layout.js';
 
 export const ROAD_LIFT = 0.15; // road surface sits this far above the terrain it was cut into
 
@@ -212,7 +212,9 @@ export class Roads {
       const flush = () => {
         if (run.length > 1) {
           const len = run[run.length - 1].s - run[0].s;
-          if (road.id === 'coast' && (!mainRun || len > mainRun.len)) mainRun = { run: run.slice(), len, road };
+          // the suspension bridge is the span across the mouth of the bay
+          const mid = run[run.length >> 1], dist = Math.hypot(mid.x - BAY.x, mid.z - (BAY.z + BAY.rz * 0.52));
+          if (road.id === 'coast' && len > 200 && (!mainRun || dist < mainRun.dist)) mainRun = { run: run.slice(), len, road, dist };
           let sincePier = 1e9;
           for (let i = 0; i < run.length - 1; i++) {
             const a = run[i], b = run[i + 1];
@@ -221,7 +223,7 @@ export class Roads {
             const w = road.halfW + 0.9;
             colliders.add({ x: mx, z: mz, hx: w, hz: l / 2 + 0.35, yaw, y0: Math.min(ya, yb) - 1.5, y1: ya, y2: yb, kind: 'deck', quiet: true });
             const pitch = -Math.atan2(yb - ya, l);
-            boxes.push({ x: mx, y: (ya + yb) / 2 - 0.8, z: mz, sx: w * 2, sy: 1.5, sz: l + 0.5, yaw, pitch, color: concrete });
+            boxes.push({ x: mx, y: (ya + yb) / 2 - 1.0, z: mz, sx: w * 2, sy: 1.5, sz: l + 0.5, yaw, pitch, color: concrete });
             for (const side of [-1, 1]) {
               const ox = Math.cos(yaw) * side * (w - 0.3), oz = -Math.sin(yaw) * side * (w - 0.3);
               colliders.add({ x: mx + ox, z: mz + oz, hx: 0.32, hz: l / 2 + 0.35, yaw, y0: Math.min(ya, yb) - 1.5, y1: ya + 0.95, y2: yb + 0.95, kind: 'rail', quiet: true });

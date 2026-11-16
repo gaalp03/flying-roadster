@@ -55,10 +55,10 @@ void main() {
   col += uGlow * (pow(sd, 5.0) * 0.42 * (0.35 + horizonBand) + pow(sd, 40.0) * 0.5);
   col += uSunColor * (smoothstep(0.99935, 0.9997, sd) * uDisc + pow(sd, 900.0) * 1.6);
   if (uStars > 0.01) {
-    vec3 g = floor(d * 190.0);
+    vec3 sp = d * 170.0, g = floor(sp), f = fract(sp) - 0.5;
     float h = hash(g);
-    float tw = smoothstep(0.9965, 1.0, h) * smoothstep(0.02, 0.25, d.y);
-    col += vec3(0.85, 0.92, 1.0) * tw * uStars * (0.6 + 0.9 * hash(g + 7.0));
+    float tw = step(0.9968, h) * smoothstep(0.4, 0.04, length(f)) * smoothstep(0.02, 0.25, d.y);
+    col += vec3(0.85, 0.92, 1.0) * tw * uStars * (1.2 + 2.6 * hash(g + 7.0));
   }
   col = mix(col, uFog, smoothstep(0.0, -0.06, d.y));
   gl_FragColor = vec4(col, 1.0);

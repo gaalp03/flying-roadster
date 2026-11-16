@@ -64,7 +64,7 @@ export class Gfx {
       this.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), this.bloomStrength, 0.6, 1.0);
       // clamp what feeds the blur so a single hot specular pixel cannot blow up (or NaN) the whole frame
       const hp = this.bloom.materialHighPassFilter;
-      hp.fragmentShader = hp.fragmentShader.replace('gl_FragColor = mix( outputColor, texel, alpha );', 'vec4 safe = mix( outputColor, texel, alpha ); if ( any( isnan( safe ) ) || any( isinf( safe ) ) ) safe = vec4( 0.0 ); gl_FragColor = min( safe, vec4( 7.0 ) );');
+      hp.fragmentShader = hp.fragmentShader.replace('gl_FragColor = mix( outputColor, texel, alpha );', 'vec4 safe = mix( outputColor, texel, alpha ); if ( any( isnan( safe ) ) || any( isinf( safe ) ) ) safe = vec4( 0.0 ); gl_FragColor = min( safe, vec4( 4.5 ) );');
       hp.needsUpdate = true;
       c.addPass(this.bloom);
       c.addPass(new OutputPass());

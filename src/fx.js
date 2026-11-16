@@ -192,6 +192,9 @@ export class Effects {
     }
   }
 
+  // Call after teleporting the car so ribbons do not stretch across the map.
+  reset() { for (const tr of this.trails) tr.pts.length = 0; }
+
   shockwave(pos, dir, size = 9, color = 0xbfe9ff) {
     const w = this.waves.find((x) => x.t >= 1) || this.waves[0];
     w.t = 0; w.size = size;

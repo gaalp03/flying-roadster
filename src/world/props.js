@@ -218,7 +218,7 @@ export function buildProps({ terrain, roads, colliders, city, pierZ }) {
     rw.receiveShadow = true;
     group.add(rw);
     // runway edge lights
-    for (let x = RUNWAY.x0 + 10; x < RUNWAY.x1; x += 28) for (const s of [-1, 1]) glow.box(x, y + 0.2, RUNWAY.z + s * (RUNWAY.halfW + 1.2), 0.5, 0.4, 0.5, x > RUNWAY.x1 - 200 ? 0xff5a3c : 0xffe7b8);
+    for (let x = RUNWAY.x0 + 10; x < RUNWAY.x1; x += 28) for (const s of [-1, 1]) glow.box(x, y + 0.14, RUNWAY.z + s * (RUNWAY.halfW + 1.2), 0.28, 0.28, 0.28, x > RUNWAY.x1 - 200 ? 0xff5a3c : 0xffe7b8);
 
     // fly-through hangar (open at both ends, runs east-west)
     const hx = -1250, hz = 296, hl = 76, hw = 17, hh = 15;
@@ -397,7 +397,7 @@ export function buildProps({ terrain, roads, colliders, city, pierZ }) {
       rings.push({ pos: new THREE.Vector3(p[0], p[1], p[2]), dir, r, chain: id, index: i, cooldown: 0, pulse: 0 });
     });
   }
-  chain('Liftoff Line', [[-440, 50, 380], [-310, 66, 384], [-170, 76, 394], [-30, 78, 410], [120, 72, 430], [280, 68, 452], [430, 78, 470]], 9);
+  chain('Liftoff Line', [[-440, 50, 380], [-310, 56, 384], [-170, 61, 394], [-30, 66, 410], [120, 64, 430], [280, 62, 452], [430, 70, 470]], 9);
   const sx = (k) => CITY.x0 + k * CITY.pitch, sz = (k) => CITY.z0 + k * CITY.pitch, cy = CITY.y;
   chain('Downtown Slalom', [[sx(3), cy + 38, sz(0) + 30], [sx(3), cy + 50, sz(2)], [sx(3), cy + 62, sz(4)], [sx(3) + 28, cy + 66, sz(5) - 12], [sx(4) + 20, cy + 70, sz(5)],
     [sx(6) - 20, cy + 74, sz(5)], [sx(6), cy + 68, sz(5) - 30], [sx(6), cy + 56, sz(3)], [sx(6), cy + 44, sz(1)]], 7.5);

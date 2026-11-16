@@ -135,7 +135,7 @@ body.touch .spd { justify-content: center; }
 body.touch #speed { font-size: clamp(40px, 8vmin, 60px); }
 body.touch #boost { margin: 5px auto 0; width: 130px; }
 body.touch #combo { bottom: auto; top: calc(var(--st) + 62px); }
-body.touch #hint { top: 30%; }
+body.touch #hint { top: auto; bottom: calc(var(--sb) + 104px); }
 body:not(.touch) #touch { display: none; }
 
 /* ---------- cinematic ---------- */
@@ -161,9 +161,9 @@ body.cine #letterbox .lb { height: 11vh; }
 .menu-foot b { color: var(--gold); font-weight: 600; }
 
 /* ---------- sheets ---------- */
-#pause, #settings, #help { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(10, 5, 9, 0.5); padding: 14px; animation: fadeIn 0.2s ease both; }
+#pause, #settings, #help { position: absolute; inset: 0; display: grid; grid-template-rows: minmax(0, 1fr); grid-template-columns: minmax(0, 1fr); place-items: center; background: rgba(10, 5, 9, 0.5); padding: 14px; animation: fadeIn 0.2s ease both; }
 @keyframes fadeIn { from { opacity: 0; } }
-.sheet { width: min(100%, 380px); max-height: 100%; display: flex; flex-direction: column; padding: clamp(18px, 3.4vmin, 30px); background: var(--panel); border-left: 5px solid var(--red); }
+.sheet { width: min(100%, 380px); max-height: 100%; overflow: hidden; display: flex; flex-direction: column; padding: clamp(18px, 3.4vmin, 30px); background: var(--panel); border-left: 5px solid var(--red); }
 .sheet.wide { width: min(100%, 760px); }
 .sheet nav .btn { min-width: 0; width: 100%; }
 .sheet nav.row .btn { width: auto; min-width: 150px; }
@@ -249,7 +249,8 @@ body.photo-clean #vignette { opacity: 0.6; }
   body.touch #speedo { bottom: auto; top: calc(var(--st) + 10px); }
   body.touch #speed { font-size: 44px; }
   body.touch #combo { top: calc(var(--st) + 118px); }
-  body.touch #toasts { top: calc(var(--st) + 200px); }
+  body.touch #toasts { top: calc(var(--st) + 206px); }
+  body.touch #hint { bottom: calc(var(--sb) + 210px); }
   #score { font-size: 26px; }
   #next .bar { width: 62px; }
   #next-label { display: none; }

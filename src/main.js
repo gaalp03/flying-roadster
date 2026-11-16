@@ -114,7 +114,7 @@ class Game {
       const o = this.rig.orbit;
       o.roll = 0; o.panY = 0; o.fov = 40;
       if (s === 'garage') { o.dist = 6.6; o.pitch = 0.2; o.panX = 0; }
-      else { o.dist = 7.6; o.pitch = 0.11; o.panX = this.camera.aspect > 1 ? -1.9 : 0; if (prev === 'loading') o.yaw = 2.45; }
+      else { o.dist = 7.6; o.pitch = 0.11; o.panX = this.camera.aspect > 1 ? 2.1 : 0; if (prev === 'loading') o.yaw = 2.45; }
     }
     if (s !== 'play') { this.ui.cinematic(false); this.ui.hint(null); }
     if (s !== 'play' && s !== 'photo') save.flush();
@@ -125,7 +125,7 @@ class Game {
       case 'play':
         this.audio.unlock();
         if (this.car.mode !== 'drive' || this.car.overWater) this.car.reset(SPAWN.x, SPAWN.z, SPAWN.yaw);
-        this.rig.snap(this.car);
+        this.rig.snap(this.car); this.fx.reset();
         this.setState('play');
         this.firstHints();
         break;
@@ -153,7 +153,7 @@ class Game {
       case 'respawn':
         this.stunts.fail();
         this.car.reset(SPAWN.x, SPAWN.z, SPAWN.yaw);
-        this.rig.snap(this.car);
+        this.rig.snap(this.car); this.fx.reset();
         this.setState('play');
         break;
       case 'back':
@@ -331,7 +331,7 @@ class Game {
         this.launch = null;
         this.ui.toast('Splashdown', 'bad', 'Back to dry land', 1600);
         setTimeout(() => this.ui.fade(true), 250);
-        setTimeout(() => { this.car.respawn(); this.rig.snap(this.car); this.syncModel(0); this.ui.fade(false); this.respawning = false; }, 620);
+        setTimeout(() => { this.car.respawn(); this.rig.snap(this.car); this.fx.reset(); this.syncModel(0); this.ui.fade(false); this.respawning = false; }, 640);
         break;
       default:
     }
@@ -394,7 +394,7 @@ class Game {
     if (this.state === 'play') {
       if (ev.pause) this.act('pause');
       else if (ev.photo) this.act('photo');
-      else if (ev.reset && !this.respawning) { this.stunts.fail(); car.respawn(); this.rig.snap(car); }
+      else if (ev.reset && !this.respawning) { this.stunts.fail(); car.respawn(); this.rig.snap(car); this.fx.reset(); }
     } else if (ev.pause) {
       if (this.state === 'pause') this.act('resume');
       else if (this.state === 'photo' || this.state === 'garage' || this.state === 'settings' || this.state === 'help') this.act('back');
