@@ -238,7 +238,6 @@ class Game {
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-      this.ui.toast('Photo saved', 'good', '', 1600);
     }, 'image/png');
   }
 
