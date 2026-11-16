@@ -8,7 +8,7 @@
     "build": "node tools/build.mjs",
     "dev": "node tools/build.mjs --watch",
     "serve": "node tools/serve.mjs",
-    "music": "node tools/make-music.mjs",
+    "audio": "node tools/build-audio.mjs",
     "zip": "node tools/build.mjs && node tools/zip.mjs"
   },
   "devDependencies": {

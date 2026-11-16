@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#14080a">
+<meta name="description" content="Flying Roadster: drive a cherry-red electric roadster up the launch ramp, fold the wheels, fire the thrusters and fly anywhere.">
+<title>Flying Roadster</title>
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="preload" href="assets/fonts/barlow-condensed-latin-700-italic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="vignette"></div>
+
+<div id="ui">
+  <!-- in-game HUD -->
+  <div id="hud" class="hidden">
+    <div class="hud-tl">
+      <div id="score"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.9 6.6 7.1.7-5.4 4.8 1.6 7L12 17.4 5.8 21.1l1.6-7L2 9.3l7.1-.7z"/></svg><span id="score-val">0</span></div>
+      <div id="next"><div class="bar"><i id="next-fill"></i></div><span id="next-label"></span></div>
+    </div>
+    <div class="hud-tr">
+      <button id="btn-photo" class="icon-btn" aria-label="Photo mode"><svg viewBox="0 0 24 24"><path d="M9 4l-1.6 2H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V8a2 2 0 00-2-2h-3.4L15 4zm3 4.5a4.5 4.5 0 110 9 4.5 4.5 0 010-9zm0 2a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"/></svg></button>
+      <button id="btn-pause" class="icon-btn" aria-label="Pause"><svg viewBox="0 0 24 24"><path d="M6 4h4v16H6zm8 0h4v16h-4z"/></svg></button>
+    </div>
+    <canvas id="minimap" width="336" height="336"></canvas>
+    <div id="speedo">
+      <div id="mode">DRIVE</div>
+      <div class="spd"><span id="speed">0</span><span id="unit">KM/H</span></div>
+      <div id="alt">ALT 0 m</div>
+      <div id="boost"><i id="boost-fill"></i><b>BOOST</b></div>
+    </div>
+    <div id="combo" class="hidden">
+      <div id="combo-lines"></div>
+      <div id="combo-pot"><span id="combo-pts">0</span><span id="combo-mult">×1</span></div>
+      <div id="combo-timer"><i></i></div>
+    </div>
+    <div id="toasts"></div>
+    <div id="hint" class="hidden"></div>
+    <div id="touch" class="hidden">
+      <div id="joy" class="hidden"><i></i></div>
+      <div id="joy-ghost"><i></i><span>STEER · GAS</span></div>
+      <button id="t-fly" class="tbtn small">FLY</button>
+      <button id="t-shift" class="tbtn">DRIFT</button>
+      <button id="t-boost" class="tbtn big">BOOST</button>
+    </div>
+  </div>
+
+  <!-- cinematic take-off -->
+  <div id="letterbox">
+    <div class="lb top"></div><div class="lb bot"></div>
+    <div id="cine-title"><b>LIFT-OFF</b><span>WHEELS UP · THRUSTERS ON</span></div>
+  </div>
+  <div id="flash"></div>
+  <div id="fade"></div>
+
+  <!-- main menu -->
+  <section id="menu" class="hidden">
+    <div class="title">
+      <div class="t-small">FLYING</div>
+      <div class="t-big">ROADSTER</div>
+      <div class="t-tag">Drive it. Launch it. Fly it.</div>
+    </div>
+    <nav>
+      <button class="btn primary" data-act="play">PLAY</button>
+      <button class="btn" data-act="garage">GARAGE</button>
+      <button class="btn" data-act="settings">SETTINGS</button>
+      <button class="btn" data-act="help">HOW TO PLAY</button>
+    </nav>
+    <div class="menu-foot" id="menu-foot"></div>
+  </section>
+
+  <!-- pause -->
+  <section id="pause" class="hidden">
+    <div class="sheet">
+      <h2>PAUSED</h2>
+      <div id="pause-stats" class="stats"></div>
+      <nav>
+        <button class="btn primary" data-act="resume">RESUME</button>
+        <button class="btn" data-act="garage">GARAGE</button>
+        <button class="btn" data-act="photo">PHOTO MODE</button>
+        <button class="btn" data-act="settings">SETTINGS</button>
+        <button class="btn" data-act="help">HOW TO PLAY</button>
+        <button class="btn" data-act="respawn">BACK TO RUNWAY</button>
+        <button class="btn ghost" data-act="menu">MAIN MENU</button>
+      </nav>
+    </div>
+  </section>
+
+  <!-- garage -->
+  <section id="garage" class="hidden">
+    <div class="g-head"><h2>GARAGE</h2><div id="g-points"></div></div>
+    <div class="g-info"><div id="g-name"></div><div id="g-state"></div></div>
+    <div class="g-strip" id="g-strip"></div>
+    <div class="g-foot"><button class="btn primary" data-act="back">DONE</button></div>
+  </section>
+
+  <!-- settings -->
+  <section id="settings" class="hidden">
+    <div class="sheet wide">
+      <h2>SETTINGS</h2>
+      <div class="scroll" id="settings-body"></div>
+      <nav class="row"><button class="btn primary" data-act="back">DONE</button></nav>
+    </div>
+  </section>
+
+  <!-- help -->
+  <section id="help" class="hidden">
+    <div class="sheet wide">
+      <h2>HOW TO PLAY</h2>
+      <div class="scroll" id="help-body"></div>
+      <nav class="row"><button class="btn primary" data-act="back">GOT IT</button></nav>
+    </div>
+  </section>
+
+  <!-- photo mode -->
+  <div id="photo" class="hidden">
+    <div class="p-top"><span>PHOTO MODE</span><em>Drag to orbit · scroll or pinch to zoom</em></div>
+    <div class="p-bar">
+      <label>Zoom<input type="range" id="p-fov" min="18" max="80" value="42"></label>
+      <label>Tilt<input type="range" id="p-roll" min="-35" max="35" value="0"></label>
+      <label>Height<input type="range" id="p-pan" min="-10" max="30" value="0"></label>
+      <button class="btn small" id="p-time">GOLDEN HOUR</button>
+      <button class="btn small" id="p-hide">HIDE UI</button>
+      <button class="btn small primary" id="p-shot">SAVE PHOTO</button>
+      <button class="btn small ghost" id="p-exit">EXIT</button>
+    </div>
+  </div>
+
+  <!-- loading -->
+  <div id="loading">
+    <div class="title">
+      <div class="t-small">FLYING</div>
+      <div class="t-big">ROADSTER</div>
+    </div>
+    <div class="load-bar"><i id="load-fill"></i></div>
+    <div class="load-tip" id="load-tip">Charging the thrusters…</div>
+  </div>
+</div>
+<script src="js/game.js"></script>
+</body>
+</html>

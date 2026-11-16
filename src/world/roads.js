@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { lerp, smoothstep } from '../util.js';
 import { MOUNTAIN, CAPE } from './layout.js';
 
-export const ROAD_LIFT = 0.12; // road surface sits this far above the terrain it was cut into
+export const ROAD_LIFT = 0.15; // road surface sits this far above the terrain it was cut into
 
 function summitSpiral() {
   const pts = [[-100, -60], [-112, -150]];
@@ -115,9 +115,11 @@ function roadTexture(lanes) {
 }
 
 export class Roads {
-  constructor(heightFn) {
+  constructor(heightFn, pierZ) {
     this.roads = [];
-    for (const def of DEFS) this.roads.push(sampleRoad(def, heightFn, this.roads));
+    const defs = DEFS.slice();
+    if (pierZ && pierZ - 44 > 1010) defs.push({ id: 'pier', halfW: 6.5, lanes: 2, deck: 7, join: 'coast', pts: [[900, 945], [893, 990], [884, (990 + pierZ - 44) / 2], [880, pierZ - 44]] });
+    for (const def of defs) this.roads.push(sampleRoad(def, heightFn, this.roads));
     this.cell = 32;
     this.hash = new Map();
     for (const road of this.roads) {
@@ -189,7 +191,7 @@ export class Roads {
       geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
       geo.setIndex(idx);
       geo.computeVertexNormals();
-      const mat = new THREE.MeshLambertMaterial({ map: roadTexture(lanes), polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 });
+      const mat = new THREE.MeshLambertMaterial({ map: roadTexture(lanes), polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -8 });
       const mesh = new THREE.Mesh(geo, mat);
       mesh.receiveShadow = true;
       mesh.matrixAutoUpdate = false;
