@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { lerp, mulberry32 } from '../util.js';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { SUN_AZIMUTH } from './layout.js';
 
 // Time-of-day presets. Colours are sRGB hex, converted to linear when applied.
@@ -161,6 +162,7 @@ export class Sky {
       this.from[k] = this.v[k] ?? target[k];
     }
     this.t = instant ? 1 : 0;
+    if (this.studio) { this.t = 1; for (const k of COLOR_KEYS) this.v[k].copy(this.to[k]); for (const k of NUM_KEYS) this.v[k] = this.to[k]; this.from = this.to; this.refreshEnv(); this.scene.environment = this.studioEnv.texture; return; }
     this.apply(this.t);
     if (instant) this.refreshEnv();
   }
@@ -195,8 +197,24 @@ export class Sky {
     if (old) old.dispose();
   }
 
+  // Neutral studio lighting for the reveal hall (menu / garage); off restores the time of day.
+  setStudio(on) {
+    if (on === this.studio) return;
+    this.studio = on;
+    if (on) {
+      if (!this.studioEnv) this.studioEnv = this.pmrem.fromScene(new RoomEnvironment(), 0.04);
+      this.scene.environment = this.studioEnv.texture;
+      this.sun.color.set(0xffffff); this.sun.intensity = 0.5;
+      this.hemi.color.set(0xdfe6f2); this.hemi.groundColor.set(0x16171c); this.hemi.intensity = 0.45;
+      this.renderer.toneMappingExposure = 0.92;
+    } else {
+      this.apply(this.t);
+      if (this.envRT) this.scene.environment = this.envRT.texture;
+    }
+  }
+
   update(dt, camera, focus) {
-    if (this.t < 1) {
+    if (this.t < 1 && !this.studio) {
       this.t = Math.min(1, this.t + dt / 1.6);
       this.apply(this.t);
       if (this.t >= 1) this.refreshEnv();

@@ -21,10 +21,10 @@ import { damp, dampAngle } from './util.js';
 // Main-menu presentation: each slide poses the car and the camera.
 const SLIDES = [
   { title: 'MEET THE ROADSTER', text: 'All-electric, near silent and absurdly quick. One car, one island, no rules.', yaw: 2.45, pitch: 0.11, dist: 7.6, fly: 0 },
-  { title: 'HIT THE RAMP', text: 'Floor it down the runway and take the launch ramp for a slow-motion lift-off.', yaw: 0.75, pitch: 0.16, dist: 7.2, fly: 0 },
-  { title: 'WHEELS UP', text: 'The wheels fold away, the cold-gas thrusters fire and the roadster simply flies.', yaw: 3.95, pitch: 0.03, dist: 6.8, fly: 1 },
+  { title: 'HIT THE RAMP', text: 'Floor it down the runway and take the launch ramp for a slow-motion lift-off.', yaw: 0.75, pitch: 0.16, dist: 8.2, fly: 0 },
+  { title: 'WHEELS UP', text: 'The wheels fold away, the cold-gas thrusters fire and the roadster simply flies.', yaw: 3.95, pitch: 0.08, dist: 8.6, fly: 1 },
   { title: 'FLY ANYWHERE', text: 'Thread the ring chains, skim the bay, slip under the bridge, land on a rooftop.', yaw: 1.5, pitch: 0.3, dist: 8.4, fly: 1 },
-  { title: 'STUNT FOR PAINT', text: 'Flips, drifts, near misses and combos earn points that unlock 13 more colours.', yaw: 5.3, pitch: 0.14, dist: 7.0, fly: 0 },
+  { title: 'STUNT FOR PAINT', text: 'Flips, drifts, near misses and combos earn points that unlock 13 more colours.', yaw: 5.3, pitch: 0.14, dist: 7.8, fly: 0 },
   { title: 'FRAME THE SHOT', text: 'Photo mode with golden hour, clear day and night. Save it and show it off.', yaw: 2.9, pitch: 0.42, dist: 9.0, fly: 0 },
 ];
 
@@ -72,7 +72,8 @@ class Game {
 
     this.model = new CarModel();
     this.scene.add(this.model.root);
-    this.scene.add(buildShowroom());
+    this.hall = buildShowroom();
+    this.scene.add(this.hall);
     this.car = new Vehicle(this.world);
     this.rig = new CameraRig(this.camera, this.world);
     this.fx = new Effects(this.scene, this.model);
@@ -123,7 +124,10 @@ class Game {
     this.state = s;
     this.ui.show(s === 'play' ? null : s);
     if (s === 'play') sdk.gameplayStart(); else sdk.gameplayStop();
-    this.rig.orbit.floor = s === 'menu' || s === 'garage' ? STAGE_TOP + 0.25 : null;
+    if (s === 'menu' || s === 'garage') this.inHall = true;
+    else if (s === 'play' || s === 'pause' || s === 'photo') this.inHall = false;
+    this.rig.orbit.floor = this.inHall ? STAGE_TOP + 0.25 : null;
+    this.world.sky.setStudio(!!this.inHall);
     if (this.fx) this.fx.reset();
     if (s === 'menu') { this.show.slide = -1; this.show.t = 99; }
     if (s === 'menu' || s === 'garage') {
@@ -409,17 +413,23 @@ class Game {
     if (!garage) {
       o.yaw = dampAngle(o.yaw, sl.yaw, 1.6, dt) + dt * 0.05;
       o.pitch = damp(o.pitch, sl.pitch, 1.6, dt);
-      o.dist = damp(o.dist, sl.dist, 1.6, dt);
+      const tall = this.camera.aspect < 1;
+      o.dist = damp(o.dist, sl.dist * (tall ? 1.18 : 1), 1.6, dt);
+      o.panY = damp(o.panY, tall ? 0.75 : 0, 3, dt);
     }
     s.fold = clamp(s.fold + (sl.fly ? 1 : -1) * dt / 0.7, 0, 1);
-    s.lift = damp(s.lift, sl.fly ? 0.75 : 0, 3, dt);
-    s.thrust = damp(s.thrust, sl.fly ? 0.45 : 0, 3, dt);
+    s.lift = damp(s.lift, sl.fly ? 0.4 : 0, 3, dt);
+    s.thrust = damp(s.thrust, sl.fly ? 0.3 : 0, 3, dt);
     s.hover = damp(s.hover, sl.fly ? 0.85 : 0, 2.2, dt);
     s.yaw += dt * (garage ? 0.12 : 0.22);
     s.pos.y = STAGE_TOP + s.hover + Math.sin(this.world.time * 2) * 0.04 * s.hover;
     s.quat.setFromAxisAngle(_v.set(0, 1, 0), s.yaw);
     m.root.position.copy(s.pos);
     m.root.quaternion.copy(s.quat);
+    const sh = this.hall.userData.shadow, k = 1 + s.hover * 0.5;
+    sh.rotation.y = s.yaw;
+    sh.scale.set(2.5 * k, 1, 5.6 * k);
+    sh.material.opacity = 1 - s.hover * 0.55;
     m.body.rotation.set(Math.sin(this.world.time * 1.3) * 0.02 * s.hover, 0, 0);
     m.body.position.y = 0;
     m.pose(s.fold, 0, 0, s.lift);

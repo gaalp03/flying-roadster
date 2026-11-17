@@ -248,7 +248,7 @@ export class CarModel {
 
     const m = (this.mats = {
       paint: new THREE.MeshPhysicalMaterial({ color: 0xcfd1ce, metalness: 0.12, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.13, envMapIntensity: 1.1 }),
-      glass: new THREE.MeshStandardMaterial({ color: 0x6b4a1c, metalness: 1, roughness: 0.24, envMapIntensity: 1.35 }),
+      glass: new THREE.MeshPhysicalMaterial({ color: 0x14100b, metalness: 0.2, roughness: 0.08, clearcoat: 1, clearcoatRoughness: 0.05, sheen: 0.6, sheenColor: 0x8a6430, sheenRoughness: 0.4 }),
       titan: new THREE.MeshStandardMaterial({ color: 0x8d9197, metalness: 0.92, roughness: 0.34 }),
       trim: new THREE.MeshStandardMaterial({ color: 0x0c0d0f, metalness: 0.3, roughness: 0.55 }),
       tire: new THREE.MeshStandardMaterial({ color: 0x131417, roughness: 0.9, metalness: 0 }),

@@ -111,8 +111,10 @@ export class Gfx {
   render() {
     this.resize(false);
     if (this.composer) {
-      this.bloom.strength = this.world.sky.v.bloom;
-      this.bloom.threshold = this.world.sky.v.bloomT;
+      const sky = this.world.sky;
+      this.bloom.strength = sky.studio ? 0.38 : sky.v.bloom;
+      this.bloom.threshold = sky.studio ? 1.6 : sky.v.bloomT;
+      this.bloom.radius = sky.studio ? 0.35 : 0.6;
       this.composer.render();
     } else this.renderer.render(this.scene, this.camera);
   }

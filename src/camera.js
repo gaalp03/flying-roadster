@@ -160,11 +160,13 @@ export class CameraRig {
       if (drag.zoom) o.dist = clamp(o.dist * (1 + drag.zoom * 0.08), 3.6, 60);
     }
     o.yaw += auto * dt;
-    const cy = car.yaw, cr = Math.cos(cy), sr = Math.sin(cy);
+    const cy = car.yaw;
     _t.copy(car.pos);
     _t.y += 0.62 + o.panY;
-    _t.x += cr * o.panX; _t.z -= sr * o.panX;
-    const a = cy + o.yaw, portrait = cam.aspect < 1 ? 1.35 : 1, d = o.dist * portrait;
+    const a = cy + o.yaw;
+    // horizontal pan is along the camera's own right axis so it stays put on screen while orbiting
+    _t.x -= Math.cos(a) * o.panX; _t.z += Math.sin(a) * o.panX;
+    const portrait = cam.aspect < 1 ? 1.35 : 1, d = o.dist * portrait;
     _p.set(_t.x + Math.sin(a) * Math.cos(o.pitch) * d, _t.y + Math.sin(o.pitch) * d, _t.z + Math.cos(a) * Math.cos(o.pitch) * d);
     if (o.floor != null) { if (_p.y < o.floor) _p.y = o.floor; } else {
       this.world.ground(_p.x, _p.y + 400, _p.z, _g);

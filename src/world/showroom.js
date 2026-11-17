@@ -8,9 +8,9 @@ export const STAGE_TOP = SHOW_Y + 0.18;
 export function buildShowroom() {
   const g = new THREE.Group();
   const basic = (r, gr, b) => new THREE.MeshBasicMaterial({ color: new THREE.Color(r, gr, b), fog: false });
-  const floor = new THREE.Mesh(new THREE.CircleGeometry(42, 64).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x0b0c10, roughness: 0.2, metalness: 0.75, fog: false, envMapIntensity: 0.12 }));
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(42, 64).rotateX(-Math.PI / 2), new THREE.MeshPhongMaterial({ color: 0x0a0b0e, specular: 0x30323a, shininess: 70, fog: false }));
   floor.receiveShadow = true;
-  const stage = new THREE.Mesh(new THREE.CylinderGeometry(4.3, 4.5, 0.18, 64), new THREE.MeshStandardMaterial({ color: 0x1b1d24, roughness: 0.32, metalness: 0.7, fog: false, envMapIntensity: 0.12 }));
+  const stage = new THREE.Mesh(new THREE.CylinderGeometry(4.3, 4.5, 0.18, 64), new THREE.MeshPhongMaterial({ color: 0x1a1c22, specular: 0x55585f, shininess: 90, fog: false }));
   stage.position.y = 0.09;
   stage.receiveShadow = true;
   g.userData.stage = stage;
@@ -21,11 +21,11 @@ export function buildShowroom() {
   g.add(floor, stage, wall, roof);
   // glowing rings on the stage edge, the floor and the ceiling
   const ring = (r, tube, y, mat) => { const m = new THREE.Mesh(new THREE.TorusGeometry(r, tube, 6, 96).rotateX(Math.PI / 2), mat); m.position.y = y; g.add(m); return m; };
-  ring(4.42, 0.035, 0.19, basic(4.5, 4.1, 3.6));
+  ring(4.42, 0.035, 0.19, basic(2.6, 2.4, 2.1));
   ring(9, 0.03, 0.02, basic(2.6, 0.22, 0.16));
   ring(16, 0.03, 0.02, basic(0.5, 0.5, 0.55));
-  ring(8, 0.14, 13, basic(5, 4.7, 4.2));
-  ring(15, 0.08, 16, basic(2.4, 2.3, 2.2));
+  ring(8, 0.1, 13, basic(2.2, 2.1, 1.9));
+  ring(15, 0.06, 16, basic(1.3, 1.25, 1.2));
   // vertical light blades around the hall
   const blade = new THREE.BoxGeometry(0.35, 15, 0.12);
   for (let k = 0; k < 24; k++) {
@@ -58,6 +58,18 @@ export function buildShowroom() {
     l.position.set(lx, ly, lz);
     g.add(l);
   }
+  // soft contact shadow under the car on the stage
+  const sc = document.createElement('canvas');
+  sc.width = sc.height = 128;
+  const sx = sc.getContext('2d'), gr = sx.createRadialGradient(64, 64, 4, 64, 64, 64);
+  gr.addColorStop(0, 'rgba(0,0,0,0.85)'); gr.addColorStop(0.55, 'rgba(0,0,0,0.45)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+  sx.fillStyle = gr; sx.fillRect(0, 0, 128, 128);
+  const shadow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(sc), transparent: true, depthWrite: false, fog: false }));
+  shadow.position.y = 0.185;
+  shadow.renderOrder = 1;
+  g.userData.shadow = shadow;
+  g.add(shadow);
+  g.name = 'showroom'; floor.name = 'hallFloor';
   g.position.y = SHOW_Y;
   return g;
 }
