@@ -3,6 +3,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 
 const TIERS = {
   low: { ratio: 1, bloom: false, shadows: 0, msaa: 0, treeShadows: false, trees: 0.4 },
@@ -11,6 +12,22 @@ const TIERS = {
 };
 
 // Owns the WebGL renderer, post-processing chain and the quality / dynamic resolution logic.
+// Radial zoom blur used for the lift-off punch.
+const RADIAL = {
+  uniforms: { tDiffuse: { value: null }, uStrength: { value: 0 } },
+  vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader: `uniform sampler2D tDiffuse; uniform float uStrength; varying vec2 vUv;
+    void main() {
+      vec2 d = vUv - vec2(0.5, 0.52);
+      float r = length(d);
+      vec4 acc = vec4(0.0);
+      float amt = uStrength * 0.11 * smoothstep(0.08, 0.6, r);
+      for (int i = 0; i < 10; i++) acc += texture2D(tDiffuse, vUv - d * amt * (float(i) / 9.0));
+      acc /= 10.0;
+            gl_FragColor = acc;
+    }`,
+};
+
 export class Gfx {
   constructor(canvas) {
     this.canvas = canvas;
@@ -26,6 +43,7 @@ export class Gfx {
     this.composer = null;
     this.frameAcc = 0; this.frameN = 0; this.slowStreak = 0; this.fastStreak = 0;
     this.bloomStrength = 0.5;
+    this.radial = 0;
     this.w = 1; this.h = 1;
   }
 
@@ -70,6 +88,9 @@ export class Gfx {
       hp.fragmentShader = hp.fragmentShader.replace('gl_FragColor = mix( outputColor, texel, alpha );', 'vec4 safe = mix( outputColor, texel, alpha ); if ( any( isnan( safe ) ) || any( isinf( safe ) ) ) safe = vec4( 0.0 ); gl_FragColor = min( safe, vec4( 4.5 ) );');
       hp.needsUpdate = true;
       c.addPass(this.bloom);
+      this.radialPass = new ShaderPass(RADIAL);
+      this.radialPass.enabled = false;
+      c.addPass(this.radialPass);
       c.addPass(new OutputPass());
     }
     this.resize(true);
@@ -115,6 +136,8 @@ export class Gfx {
       this.bloom.strength = sky.studio ? 0.38 : sky.v.bloom;
       this.bloom.threshold = sky.studio ? 1.6 : sky.v.bloomT;
       this.bloom.radius = sky.studio ? 0.35 : 0.6;
+      this.radialPass.enabled = this.radial > 0.01;
+      this.radialPass.uniforms.uStrength.value = this.radial;
       this.composer.render();
     } else this.renderer.render(this.scene, this.camera);
   }

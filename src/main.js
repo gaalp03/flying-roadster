@@ -41,6 +41,7 @@ class Game {
     this.launch = null;
     this.cine = null;
     this.timeScale = 1;
+    this.liftFx = 0;
     this.pend = { fly: false, boostPressed: false };
     this.respawning = false;
     this.playTime = 0;
@@ -278,7 +279,9 @@ class Game {
         car.foldTarget = 1;
         car.launching = true;
         audio.play('fold', { rate: 0.7 });
+        audio.play('whoosh2', { rate: 0.55, gain: 0.8 });
         this.launch = { t: 0 };
+        this.liftFx = Math.max(this.liftFx, 0.35);
         if (save.data.settings.cinematic) {
           this.cine = { t: 0, dur: 2.8 };
           this.rig.startCinematic(car, 2.8);
@@ -293,7 +296,7 @@ class Game {
         audio.play('ignite', { gain: e.fromRamp ? 1 : 0.7 });
         if (!e.fromRamp) audio.play('fold');
         this.rig.addShake(0.5 * shake);
-        if (e.fromRamp) { this.ui.flash(); if (this.cine) this.ui.cineTitle(); else this.ui.toast('Lift-off', 'big', 'Wheels up · thrusters on', 1800); }
+        if (e.fromRamp) { this.liftFx = 1.25; this.rig.punch = 1; audio.play('whoosh', { rate: 0.8, gain: 0.9 }); this.ui.flash(); if (this.cine) this.ui.cineTitle(); else this.ui.toast('Lift-off', 'big', 'Wheels up · thrusters on', 1800); }
         if (e.wasGround) fx.burst('dust', p.x, p.y, p.z, 0, 0, 0, 14);
         if (!this.hinted.fly) {
           this.hinted.fly = true;
@@ -486,12 +489,20 @@ class Game {
       st.fly = st.boostPressed = false;
       this.syncModel(simDt);
       this.rig.update(real, car, drag, { lookBack: st.look, realDt: real });
+      this.world.guideFocus = car.pos;
+      this.guideDim = damp(this.guideDim || 0, car.mode === 'fly' || car.alt > 30 ? 1 : 0, 2, real);
+      this.world.guideDim = this.guideDim;
       this.world.update(simDt, this.camera, car.pos);
+      if (this.world.guide.passed >= 0) { this.audio.play('whoosh2', { rate: 1.1 + this.world.guide.passed * 0.06, gain: 0.55 }); this.audio.play('tick', { rate: 0.8 + this.world.guide.passed * 0.1, gain: 0.6 }); }
+      this.liftFx = Math.max(0, (this.liftFx || 0) - real * 1.5);
+      this.gfx.radial = Math.min(1, this.liftFx);
       this.fx.update(simDt, car, this.camera, this.gfx.h);
       this.ui.hud(car, this.stunts);
       this.minimap.draw(car);
       if (this.hinted.start && !this.hinted.startDone && (car.speed > 28 || car.mode !== 'drive')) { this.hinted.startDone = true; this.ui.hint(null); }
     } else if (this.state === 'menu' || this.state === 'garage') {
+      this.world.guideFocus = null;
+      this.gfx.radial = 0;
       this.updateShow(real, this.state === 'garage', drag);
     } else if (this.state === 'photo') {
       this.rig.updateOrbit(real, car, drag, 0);

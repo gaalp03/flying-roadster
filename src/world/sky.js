@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { lerp, mulberry32 } from '../util.js';
-import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { SUN_AZIMUTH } from './layout.js';
 
 // Time-of-day presets. Colours are sRGB hex, converted to linear when applied.

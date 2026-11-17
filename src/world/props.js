@@ -3,6 +3,7 @@ import { mulberry32, fbm } from '../util.js';
 import { AIR, RUNWAY, LAUNCH, CITY, MOUNTAIN, BAY, CAPE, WINDHILL } from './layout.js';
 import { ROAD_LIFT } from './roads.js';
 import { Batch } from './batch.js';
+import { dashedRingGeo } from './guide.js';
 
 const FONT = '"Barlow Condensed", "Arial Narrow", Arial, sans-serif';
 
@@ -466,10 +467,15 @@ export function buildProps({ terrain, roads, colliders, city, pierZ }) {
   const haloMat = new THREE.MeshBasicMaterial({ color: 0x66e8ff, transparent: true, opacity: 0.07, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false });
   const haloMesh = new THREE.InstancedMesh(haloGeo, haloMat, rings.length);
   haloMesh.frustumCulled = false;
-  group.add(ringMesh, haloMesh);
+  const spinMesh = new THREE.InstancedMesh(dashedRingGeo(6, 0.5, 0.04), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.55, 0.55, 0.55), fog: false }), rings.length);
+  spinMesh.frustumCulled = false;
+  group.add(ringMesh, haloMesh, spinMesh);
+  const spinQ = new THREE.Quaternion();
+  let ringTime = 0;
   const rm = new THREE.Matrix4(), rq = new THREE.Quaternion(), rs = new THREE.Vector3(), rc = new THREE.Color(), zAxis = new THREE.Vector3(0, 0, 1);
   const ON = new THREE.Color(0.55, 3.0, 3.9), OFF = new THREE.Color(0.1, 0.16, 0.22), HOT = new THREE.Color(5, 4.4, 2.8);
   function updateRings(dt) {
+    ringTime += dt;
     for (let i = 0; i < rings.length; i++) {
       const r = rings[i];
       if (r.cooldown > 0) r.cooldown -= dt;
@@ -482,7 +488,13 @@ export function buildProps({ terrain, roads, colliders, city, pierZ }) {
       rc.copy(r.cooldown > 0 ? OFF : ON).lerp(HOT, r.pulse);
       ringMesh.setColorAt(i, rc);
       haloMesh.setColorAt(i, r.cooldown > 0 ? OFF : ON);
+      rq.multiply(spinQ.setFromAxisAngle(zAxis, ringTime * (i % 2 ? 1.1 : -1.1) + i));
+      rm.compose(r.pos, rq, rs.multiplyScalar(0.84));
+      spinMesh.setMatrixAt(i, rm);
+      spinMesh.setColorAt(i, rc);
     }
+    spinMesh.instanceMatrix.needsUpdate = true;
+    spinMesh.instanceColor.needsUpdate = true;
     ringMesh.instanceMatrix.needsUpdate = true;
     haloMesh.instanceMatrix.needsUpdate = true;
     ringMesh.instanceColor.needsUpdate = true;

@@ -17,6 +17,7 @@ export class CameraRig {
     this.fov = 60;
     this.shake = 0;
     this.kick = 0;
+    this.punch = 0;
     this.roll = 0;
     this.time = 0;
     this.cine = null;
@@ -128,6 +129,10 @@ export class CameraRig {
       rollT = lerp(-c.side * 0.06, rollT, out);
       if (k >= 1) this.cine = null;
     }
+
+    // lift-off FOV punch, decays on real time so it also plays out of slow motion
+    fov += this.punch * 16;
+    this.punch = Math.max(0, this.punch - (opts.realDt ?? dt) * 1.1);
 
     this.shake = Math.max(0, this.shake - dt * 2.4);
     const sh = this.shake * this.shake * 0.35 + (car.boosting ? 0.012 : 0) + (fly ? sk * 0.008 : 0);

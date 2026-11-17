@@ -5,6 +5,7 @@ import { Sky } from './sky.js';
 import { createWater } from './water.js';
 import { buildCity } from './city.js';
 import { buildProps } from './props.js';
+import { buildGuide } from './guide.js';
 import { AIR, CITY } from './layout.js';
 
 // Builds the whole island and answers "what is under this point?" for the vehicle.
@@ -24,6 +25,8 @@ export class World {
     scene.add(this.city.group);
     this.props = buildProps({ terrain: this.terrain, roads: this.roads, colliders: this.colliders, city: this.city, pierZ });
     scene.add(this.props.group);
+    this.guide = buildGuide();
+    scene.add(this.guide.group);
     this.sky = new Sky(scene, renderer);
     this.water = createWater(this.terrain.buildHeightTexture());
     scene.add(this.water);
@@ -85,5 +88,6 @@ export class World {
     this.city.mats.A.emissiveIntensity = v.windows;
     this.city.mats.B.emissiveIntensity = v.windows * 0.8;
     this.props.update(dt, this.time, v.lamps);
+    this.guide.update(dt, this.guideFocus || null, this.guideDim || 0);
   }
 }
