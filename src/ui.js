@@ -287,5 +287,14 @@ export class UI {
     void K;
   }
 
+  slide(i, n, s) {
+    const box = $('showcase');
+    $('sc-num').textContent = `0${i + 1} / 0${n}`;
+    $('sc-title').textContent = s.title;
+    $('sc-text').textContent = s.text;
+    $('sc-dots').innerHTML = Array.from({ length: n }, (_, k) => `<i class="${k === i ? 'on' : ''}"></i>`).join('');
+    box.classList.remove('in'); void box.offsetWidth; box.classList.add('in');
+  }
+
   photoTime() { $('p-time').textContent = TIMES[this.game.world.sky.name].label.toUpperCase(); }
 }

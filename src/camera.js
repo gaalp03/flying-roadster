@@ -20,7 +20,7 @@ export class CameraRig {
     this.roll = 0;
     this.time = 0;
     this.cine = null;
-    this.orbit = { yaw: 0.7, pitch: 0.16, dist: 7, roll: 0, fov: 42, panX: 0, panY: 0 };
+    this.orbit = { yaw: 0.7, pitch: 0.16, dist: 7, roll: 0, fov: 42, panX: 0, panY: 0, floor: null };
     this.sens = 1;
     this.snapNext = true;
   }
@@ -166,9 +166,11 @@ export class CameraRig {
     _t.x += cr * o.panX; _t.z -= sr * o.panX;
     const a = cy + o.yaw, portrait = cam.aspect < 1 ? 1.35 : 1, d = o.dist * portrait;
     _p.set(_t.x + Math.sin(a) * Math.cos(o.pitch) * d, _t.y + Math.sin(o.pitch) * d, _t.z + Math.cos(a) * Math.cos(o.pitch) * d);
-    this.world.ground(_p.x, _p.y + 400, _p.z, _g);
-    if (_p.y < _g.h + 0.35) _p.y = _g.h + 0.35;
-    if (_p.y < 0.4) _p.y = 0.4;
+    if (o.floor != null) { if (_p.y < o.floor) _p.y = o.floor; } else {
+      this.world.ground(_p.x, _p.y + 400, _p.z, _g);
+      if (_p.y < _g.h + 0.35) _p.y = _g.h + 0.35;
+      if (_p.y < 0.4) _p.y = 0.4;
+    }
     cam.position.copy(_p);
     cam.up.set(0, 1, 0);
     cam.lookAt(_t);

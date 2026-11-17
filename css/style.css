@@ -266,3 +266,17 @@ body.photo-clean #vignette { opacity: 0.6; }
   .swatch { width: 50px; height: 50px; }
   .g-strip { bottom: calc(var(--sb) + 50px); }
 }
+
+/* ---------- showcase slides (main menu) ---------- */
+#showcase { position: absolute; right: calc(6vw + var(--sr)); bottom: calc(9vh + var(--sb)); width: min(40vw, 440px); text-align: right; text-shadow: 0 3px 18px rgba(0, 0, 0, 0.7); }
+#showcase.in > * { animation: scIn 0.55s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+#showcase.in b { animation-delay: 0.06s; } #showcase.in p { animation-delay: 0.14s; }
+@keyframes scIn { from { opacity: 0; transform: translateX(34px) skewX(-6deg); } }
+#sc-num { display: block; font: italic 700 clamp(15px, 2.2vmin, 20px)/1 var(--display); letter-spacing: 0.3em; color: var(--red-hot); }
+#sc-title { display: block; margin-top: 6px; font: italic 700 clamp(34px, 7vmin, 68px)/0.92 var(--display); letter-spacing: 0.02em; color: #fff; }
+#sc-text { margin: 10px 0 0; font: 500 clamp(14px, 2.1vmin, 18px)/1.4 var(--body); color: var(--dim); }
+#sc-dots { margin-top: 14px; display: flex; gap: 6px; justify-content: flex-end; }
+#sc-dots i { width: 26px; height: 3px; background: rgba(255, 243, 224, 0.25); transform: skewX(-20deg); }
+#sc-dots i.on { background: var(--red-hot); }
+@media (orientation: portrait) { #showcase { right: 8vw; left: 8vw; width: auto; bottom: auto; top: 33vh; text-align: left; } #sc-dots { justify-content: flex-start; } #sc-text { display: none; } }
+@media (max-height: 460px) { #sc-text { display: none; } #showcase { bottom: calc(14vh + var(--sb)); } }
