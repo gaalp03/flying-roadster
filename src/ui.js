@@ -3,6 +3,7 @@ import { PAINTS } from './car/model.js';
 import { save } from './save.js';
 import { ACTIONS, DEFAULT_KEYS, keyLabel } from './input.js';
 import { TIMES, TIME_ORDER } from './world/sky.js';
+import { CHALLENGES, progress, isDone } from './challenges.js';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html !== undefined) e.innerHTML = html; return e; };
@@ -11,7 +12,7 @@ const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls)
 export class UI {
   constructor(game) {
     this.game = game;
-    this.screens = ['menu', 'pause', 'garage', 'settings', 'help', 'photo'];
+    this.screens = ['menu', 'pause', 'garage', 'settings', 'help', 'photo', 'challenges'];
     this.last = {};
     this.hintTimer = null;
     document.querySelectorAll('[data-act]').forEach((b) => b.addEventListener('click', () => { game.audio.play('click'); game.act(b.dataset.act); }));
@@ -35,6 +36,25 @@ export class UI {
     if (name === 'garage') this.buildGarage();
     if (name === 'settings') this.buildSettings();
     if (name === 'photo') this.photoTime();
+    if (name === 'challenges') this.buildChallenges();
+    const done = save.data.done.length, sum = `${done}/${CHALLENGES.length}`;
+    $('ch-count-menu').textContent = sum; $('ch-count-pause').textContent = sum;
+  }
+
+  buildChallenges() {
+    const done = save.data.done.length;
+    $('ch-sum').textContent = `${done} / ${CHALLENGES.length}`;
+    const mph = save.data.settings.units === 'mph';
+    const val = (c, v) => {
+      if (c.unit === 'km/h') return mph ? `${Math.round(v / 1.609)} mph` : `${Math.round(v)} km/h`;
+      return (c.dec ? v.toFixed(c.dec) : fmt(Math.floor(v))) + (c.unit ? ` ${c.unit}` : '');
+    };
+    const items = CHALLENGES.map((c) => {
+      const ok = isDone(c), p = ok ? c.n : progress(c), desc = c.unit === 'km/h' && mph ? 'Hit 211 mph' : c.desc;
+      return `<div class="ch${ok ? ' done' : ''}"><b>${c.name}</b><em>${ok ? '✓ DONE' : `+${fmt(c.reward)}`}</em><p>${desc}</p>
+        <div class="bar"><i style="width:${Math.round((p / c.n) * 100)}%"></i></div>${ok || c.n === 1 ? '' : `<span class="num">${val(c, p)} / ${val(c, c.n)}</span>`}</div>`;
+    });
+    $('ch-body').innerHTML = `<div class="ch-list">${items.join('')}</div>`;
   }
 
   loading(p, tip) {
@@ -256,7 +276,7 @@ export class UI {
     $('help-body').innerHTML = `<div class="help-grid">
       <div><h3>The idea</h3>
         <p><b>Free play.</b> Floor it down the runway, hit the launch ramp, and the roadster folds its wheels, lights its thrusters and takes off. Fly anywhere, land anywhere, drive again.</p>
-        <p>Stunts fill a combo pot. Stay in control for a moment to <b>bank</b> it — crash and it is gone. Stunt points unlock new paint.</p></div>
+        <p>Stunts fill a combo pot. Stay in control for a moment to <b>bank</b> it — crash and it is gone. Stunt points unlock new paint, and <b>Challenges</b> pay big bonuses for milestones.</p></div>
       <div><h3>Driving</h3><ul>
         <li><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> or arrows — drive</li>
         <li><kbd>Space</kbd> — boost</li>

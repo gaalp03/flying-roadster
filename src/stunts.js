@@ -1,6 +1,7 @@
 import { fmt } from './util.js';
 import { PAINTS } from './car/model.js';
 import { save } from './save.js';
+import { checkChallenges } from './challenges.js';
 
 const TAU = Math.PI * 2;
 
@@ -32,13 +33,19 @@ export class Stunts {
   bank() {
     if (this.pot <= 0) return;
     const gain = this.pot * this.mult, d = save.data;
-    const before = d.points;
-    d.points += gain;
     if (gain > d.stats.bestCombo) d.stats.bestCombo = gain;
     this.game.ui.banked(gain, this.mult);
     this.game.audio.play(gain >= 2000 ? 'bankBig' : 'bank');
     this.pot = 0; this.mult = 1; this.lines = []; this.timer = 0;
     this.game.ui.combo(this, false);
+    this.award(gain);
+    this.checkGoals();
+  }
+
+  // Adds points to the bank and unlocks any paints they pay for.
+  award(gain) {
+    const d = save.data, before = d.points;
+    d.points += gain;
     for (const p of PAINTS) {
       if (p.cost > before && p.cost <= d.points && !d.unlocked.includes(p.id)) {
         d.unlocked.push(p.id);
@@ -46,6 +53,18 @@ export class Stunts {
       }
     }
     save.touch();
+  }
+
+  checkGoals() {
+    const list = checkChallenges();
+    list.forEach((c, i) => {
+      setTimeout(() => {
+        this.game.ui.toast('Challenge complete', 'big', `${c.name} · +${fmt(c.reward)}`, 2600);
+        this.game.audio.play('unlock', { rate: 1.12 });
+      }, 900 + i * 1400);
+      this.award(c.reward);
+    });
+    if (list.length) save.touch();
   }
 
   fail() {
@@ -72,10 +91,12 @@ export class Stunts {
         this.add('Barrel roll', 120);
         break;
       case 'near':
+        st.near++;
         if (e.gap < 1.1) this.add('Paint-thin miss', 160);
         else this.add('Near miss', 80);
         break;
       case 'under':
+        st.under++;
         this.add('Under the bridge', 300);
         break;
       case 'crash':
@@ -101,6 +122,7 @@ export class Stunts {
         if (!e.clean && (flips || spins || rolls)) { this.game.ui.toast('Sketchy landing', 'bad'); r.x = r.y = r.z = 0; break; }
         if (e.airTime > 0.75) this.add(`Air time ${e.airTime.toFixed(1)}s`, e.airTime * 70, true);
         const n = (k) => (k > 1 ? ['', '', 'Double ', 'Triple ', 'Quad '][Math.min(k, 4)] : '');
+        st.flips += flips; st.spins += spins; st.rolls += rolls;
         if (flips) this.add(n(flips) + (r.x > 0 ? 'Front flip' : 'Backflip'), 320 * flips * (flips > 1 ? 1.3 : 1));
         if (spins) this.add(`${spins * 360} Spin`, 220 * spins);
         if (rolls) this.add(n(rolls) + 'Barrel roll', 260 * rolls);
@@ -125,6 +147,9 @@ export class Stunts {
     this.time += dt;
     const st = save.data.stats;
     if (car.speed > st.topSpeed) st.topSpeed = car.speed;
+    if (car.alt > st.maxAlt && car.mode === 'fly') st.maxAlt = car.alt;
+    this.goalT = (this.goalT || 0) + dt;
+    if (this.goalT > 0.5) { this.goalT = 0; this.checkGoals(); }
 
     if (car.mode === 'air') {
       this.rot.x += car.angVel.x * dt; this.rot.y += car.angVel.y * dt; this.rot.z += car.angVel.z * dt;
@@ -136,6 +161,7 @@ export class Stunts {
     } else if (D.t > 0) {
       D.gap += dt;
       if (D.gap > 0.35) {
+        if (D.t > st.driftBest) st.driftBest = D.t;
         if (D.t > 0.9) this.add(`Drift ${D.t.toFixed(1)}s`, D.pts);
         D.t = D.pts = 0;
       }
@@ -143,7 +169,7 @@ export class Stunts {
     // low-level skimming in flight
     if (car.mode === 'fly' && car.skim && car.alt < 3 && car.speed > 38) {
       this.skimT += dt;
-      if (this.skimT > 1.1) { this.skimT = 0; this.add(car.skim === 'water' ? 'Wave skimmer' : 'Ground hugger', 60, true); }
+      if (this.skimT > 1.1) { this.skimT = 0; st.skim++; this.add(car.skim === 'water' ? 'Wave skimmer' : 'Ground hugger', 60, true); }
     } else this.skimT = Math.max(0, this.skimT - dt);
 
     this.checkRings(car);
@@ -183,6 +209,7 @@ export class Stunts {
       this.game.fx.burst('ring', r.pos.x, r.pos.y, r.pos.z, car.vel.x * 0.3, car.vel.y * 0.3, car.vel.z * 0.3, 22);
       if (c.n >= ch.count) {
         this.add(`${ch.name} complete!`, 500 + ch.count * 60);
+        if (!save.data.stats.chains.includes(ch.name)) save.data.stats.chains.push(ch.name);
         this.game.audio.play('unlock');
         this.chain.delete(r.chain);
       }

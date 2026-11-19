@@ -16,6 +16,7 @@ import { Stunts } from './stunts.js';
 import { Minimap } from './minimap.js';
 import { UI } from './ui.js';
 import { buildShowroom, STAGE_TOP } from './world/showroom.js';
+import { CHALLENGES } from './challenges.js';
 import { damp, dampAngle } from './util.js';
 
 // Main-menu presentation: each slide poses the car and the camera.
@@ -68,6 +69,10 @@ class Game {
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.6, 9000);
     this.world = new World(this.scene, this.gfx.renderer);
+    for (const c of CHALLENGES) {
+      if (c.id === 'chainAll') { c.n = this.world.chains.length; c.desc = `Complete all ${c.n} ring chains`; }
+      if (c.id === 'padAll') { c.n = this.world.pads.length; c.desc = `Land on all ${c.n} landing pads`; }
+    }
     this.ui.loading(0.62, 'Polishing the paint…');
     await nextFrame();
 
@@ -161,6 +166,7 @@ class Game {
       case 'garage': this.returnTo = this.state; this.setState('garage'); break;
       case 'settings': this.returnTo = this.state; this.setState('settings'); break;
       case 'help': this.returnTo = this.state; this.setState('help'); break;
+      case 'challenges': this.returnTo = this.state; this.setState('challenges'); break;
       case 'photo':
         if (this.state === 'play' || this.state === 'pause') {
           this.endCinematic();
@@ -464,7 +470,7 @@ class Game {
       else if (ev.reset && !this.respawning) { this.stunts.fail(); car.respawn(); this.rig.snap(car); this.fx.reset(); }
     } else if (ev.pause) {
       if (this.state === 'pause') this.act('resume');
-      else if (this.state === 'photo' || this.state === 'garage' || this.state === 'settings' || this.state === 'help') this.act('back');
+      else if (this.state === 'photo' || this.state === 'garage' || this.state === 'settings' || this.state === 'help' || this.state === 'challenges') this.act('back');
     } else if (this.state === 'photo' && ev.photo) this.act('back');
 
     if (this.state === 'play') {

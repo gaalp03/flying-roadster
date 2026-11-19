@@ -7,7 +7,8 @@ const defaults = () => ({
   points: 0,
   paint: 'white',
   unlocked: ['white'],
-  stats: { bestCombo: 0, topSpeed: 0, longestAir: 0, rings: 0, launches: 0, pads: [] },
+  stats: { bestCombo: 0, topSpeed: 0, longestAir: 0, rings: 0, launches: 0, pads: [], flips: 0, spins: 0, rolls: 0, near: 0, under: 0, chains: [], driftBest: 0, skim: 0, maxAlt: 0 },
+  done: [],
   hints: {},
   settings: { master: 0.8, music: 0.55, sfx: 0.9, quality: 'auto', cinematic: true, units: 'kmh', time: 'sunset', sens: 1, shake: true },
   keys: JSON.parse(JSON.stringify(DEFAULT_KEYS)),
@@ -29,6 +30,8 @@ export const save = {
         d.settings = Object.assign(defaults().settings, s.settings);
         d.keys = Object.assign(defaults().keys, s.keys);
         d.hints = s.hints || {};
+        if (!Array.isArray(d.done)) d.done = [];
+        if (!Array.isArray(d.stats.chains)) d.stats.chains = [];
         if (!Array.isArray(d.unlocked) || !d.unlocked.includes('white')) d.unlocked = ['white'];
       }
     } catch (e) { /* corrupt save: start fresh */ }

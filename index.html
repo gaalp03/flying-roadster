@@ -66,6 +66,7 @@
     <nav>
       <button class="btn primary" data-act="play">PLAY</button>
       <button class="btn" data-act="garage">GARAGE</button>
+      <button class="btn" data-act="challenges">CHALLENGES <span class="ch-count" id="ch-count-menu"></span></button>
       <button class="btn" data-act="settings">SETTINGS</button>
       <button class="btn" data-act="help">HOW TO PLAY</button>
     </nav>
@@ -81,6 +82,7 @@
       <nav>
         <button class="btn primary" data-act="resume">RESUME</button>
         <button class="btn" data-act="garage">GARAGE</button>
+        <button class="btn" data-act="challenges">CHALLENGES <span class="ch-count" id="ch-count-pause"></span></button>
         <button class="btn" data-act="photo">PHOTO MODE</button>
         <button class="btn" data-act="settings">SETTINGS</button>
         <button class="btn" data-act="help">HOW TO PLAY</button>
@@ -113,6 +115,15 @@
       <h2>HOW TO PLAY</h2>
       <div class="scroll" id="help-body"></div>
       <nav class="row"><button class="btn primary" data-act="back">GOT IT</button></nav>
+    </div>
+  </section>
+
+  <!-- challenges -->
+  <section id="challenges" class="hidden">
+    <div class="sheet wide">
+      <h2>CHALLENGES <span id="ch-sum"></span></h2>
+      <div class="scroll" id="ch-body"></div>
+      <nav class="row"><button class="btn primary" data-act="back">DONE</button></nav>
     </div>
   </section>
 
