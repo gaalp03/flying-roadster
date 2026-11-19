@@ -137,6 +137,12 @@ class Game {
       if (s === 'garage') { o.dist = 6.6; o.pitch = 0.2; o.panX = 0; }
       else { o.dist = 7.6; o.pitch = 0.11; o.panX = this.camera.aspect > 1 ? 2.1 : 0; if (prev === 'loading') o.yaw = 2.45; }
     }
+    if (s === 'pause' && prev === 'garage') {
+      // coming back from the reveal hall: put the car and the chase camera back on the island
+      this.syncModel(0);
+      this.rig.snap(this.car);
+      this.rig.update(1 / 60, this.car, null, {});
+    }
     if (s !== 'play') { this.ui.cinematic(false); this.ui.hint(null); }
     if (s !== 'play' && s !== 'photo') save.flush();
   }

@@ -204,11 +204,13 @@ export class Sky {
     if (on) {
       if (!this.studioEnv) this.studioEnv = this.pmrem.fromScene(new RoomEnvironment(), 0.04);
       this.scene.environment = this.studioEnv.texture;
+      this.scene.environmentIntensity = 0.5;
       this.sun.color.set(0xffffff); this.sun.intensity = 0.5;
       this.hemi.color.set(0xdfe6f2); this.hemi.groundColor.set(0x16171c); this.hemi.intensity = 0.45;
       this.renderer.toneMappingExposure = 0.92;
     } else {
       this.apply(this.t);
+      this.scene.environmentIntensity = 1;
       if (this.envRT) this.scene.environment = this.envRT.texture;
     }
   }

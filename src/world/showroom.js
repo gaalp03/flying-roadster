@@ -53,7 +53,7 @@ export function buildShowroom() {
     g.add(m);
   }
   // neutral studio lights so the paint reads true whatever the time of day outside
-  for (const [lx, ly, lz, i] of [[5, 9, 6, 150], [-7, 7, -4, 100], [0, 12, -9, 90]]) {
+  for (const [lx, ly, lz, i] of [[5, 9, 6, 110], [-7, 7, -4, 85], [0, 12, -9, 60]]) {
     const l = new THREE.PointLight(0xffffff, i, 45, 2);
     l.position.set(lx, ly, lz);
     g.add(l);
